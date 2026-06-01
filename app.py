@@ -8,11 +8,12 @@ st.set_page_config(page_title="Ewaka Restaurant")
 st.title("EWAKA RESTAURANT")
 
 # 2. Database Connection
-try:
-    r = redis.Redis(
-        url=st.secrets["UPSTASH_URL"], 
-        password=st.secrets["UPSTASH_TOKEN"]
-    )
+# 2. Database Connection
+# Upstash often works best when you pass the URL directly
+r = redis.Redis.from_url(
+    st.secrets["UPSTASH_URL"]
+)
+
 except KeyError as e:
     st.error(f"Missing secret: {e}")
     st.stop()
