@@ -8,11 +8,14 @@ st.set_page_config(page_title="Ewaka Restaurant")
 st.title("EWAKA RESTAURANT")
 
 # 2. Database Connection
-r = redis.Redis(
-    url=st.secrets["UPSTASH_URL"], 
-    password=st.secrets["UPSTASH_TOKEN"]
-)
-
+try:
+    r = redis.Redis(
+        url=st.secrets["UPSTASH_URL"], 
+        password=st.secrets["UPSTASH_TOKEN"]
+    )
+except KeyError as e:
+    st.error(f"Missing secret: {e}")
+    st.stop()
 # 3. AI Client
 client = openai.OpenAI(
     api_key=st.secrets["OPENAI_API_KEY"],
