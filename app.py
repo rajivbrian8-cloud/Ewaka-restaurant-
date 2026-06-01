@@ -1,15 +1,14 @@
 import streamlit as st
 import ast
-import os
 from redis import Redis
 from openai import OpenAI
 
-# 1. Page Setup
-st.set_page_config(page_title="Ewaka Restaurant")
+# 1. Page Configuration
+st.set_page_config(page_title="Ewaka Restaurant", layout="wide")
 st.title("EWAKA RESTAURANT")
 
-# 2. Database & AI Connections (Using Secrets)
-# IMPORTANT: In Streamlit Cloud, these keys must be set in your "Secrets" dashboard
+# 2. Connections (Using Streamlit Secrets)
+# These keys MUST be in your Streamlit Cloud "Secrets" dashboard
 redis_client = Redis(
     url=st.secrets["UPSTASH_URL"], 
     token=st.secrets["UPSTASH_TOKEN"]
@@ -20,7 +19,7 @@ client = OpenAI(
     base_url="https://api.groq.com/openai/v1"
 )
 
-# 3. Define the Tabs
+# 3. Define Tabs
 tab1, tab2, tab3 = st.tabs(["Ordering System", "Kitchen Dashboard", "Ewaka AI Chef"])
 
 # --- TAB 1: ORDERING SYSTEM ---
@@ -30,7 +29,7 @@ with tab1:
     
     selected_items = {}
     for item, price in menu_items.items():
-        qty = st.number_input(f"{item} ({price} ksh)", min_value=0, max_value=10)
+        qty = st.number_input(f"{item} ({price} ksh)", min_value=0, max_value=10, key=item)
         if qty > 0:
             selected_items[item] = {"qty": qty, "price": price}
 
@@ -53,9 +52,8 @@ with tab1:
 
 # --- TAB 2: KITCHEN DASHBOARD ---
 with tab2:
-    st.header("Staff Login")
+    st.header("Staff Access")
     password = st.text_input("Enter Staff Password", type="password")
-    
     if password == "1243":
         if st.button("Refresh Kitchen"):
             orders = redis_client.lrange("orders", 0, -1)
@@ -64,17 +62,27 @@ with tab2:
                 st.write(f"--- Order {i+1} ---")
                 st.write(f"**Phone:** {order_dict['phone']} | **Location:** {order_dict['location']}")
                 st.json(order_dict['items'])
-        
         if st.button("Clear All Orders"):
             redis_client.delete("orders")
             st.warning("Database Cleared!")
 
-# --- TAB 3: AI CHEF ---
+# --- TAB 3: EWAKA AI CHEF ---
 with tab3:
     st.title("👨‍🍳 Ask the Ewaka Chef")
     
+    # Strict Instructions (The "Law")
+    SYSTEM_PROMPT = """
+    You are a professional assistant for Ewaka Restaurant.
+    STRICT RULES:
+    1. ONLY answer questions about the menu, cooking, and restaurant services.
+    2. If a question is not about Ewaka, say: "I am sorry, I can only assist with Ewaka Restaurant inquiries."
+    3. Do not make up prices or items.
+    4. If you don't know, say "I don't have that information."
+    5. Be concise and professional.
+    """
+
     if "messages" not in st.session_state:
-        st.session_state.messages = [{"role": "system", "content": "You are a professional chef for Ewaka Restaurant. Only answer about the menu."}]
+        st.session_state.messages = [{"role": "system", "content": SYSTEM_PROMPT}]
 
     for message in st.session_state.messages:
         if message["role"] != "system":
