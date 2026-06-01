@@ -15,7 +15,7 @@ redis_client = Redis(
 )
 
 client = OpenAI(
-    api_key=st.secrets["OPENAI_API_KEY"],
+    api_key=st.secrets["GK"],
     base_url="https://api.groq.com/openai/v1"
 )
 
