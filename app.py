@@ -1,7 +1,7 @@
 import streamlit as st
 import ast
 from redis import Redis
-
+from openai import openai
 # 1. Page Configuration
 st.set_page_config(page_title="Ewaka Restaurant", layout="wide")
 st.title("EWAKA RESTAURANT")
